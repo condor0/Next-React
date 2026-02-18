@@ -7,7 +7,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 }
 
 const baseStyles =
-  'inline-flex items-center justify-center gap-2 rounded-full font-semibold transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white/80'
+  'inline-flex items-center justify-center gap-2 rounded-full font-semibold transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white/80 disabled:cursor-not-allowed disabled:opacity-60'
 
 const variants = {
   primary: 'bg-ink text-white shadow-soft hover:-translate-y-0.5',
