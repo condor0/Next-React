@@ -1,14 +1,33 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 import { Card } from "../components/Card";
-
-const projects = [
-  { id: "alpha", name: "Project Alpha", status: "In progress" },
-  { id: "atlas", name: "Atlas Migration", status: "Planned" },
-  { id: "nova", name: "Nova Storybook", status: "In review" },
-];
+import { ProjectForm } from "../components/ProjectForm";
+import { useToast } from "../components/toastContext";
+import type { ProjectValues } from "../forms/schemas";
+import {
+  createProject,
+  loadProjects,
+  type ProjectRecord,
+} from "../state/projectsStore";
 
 export default function Projects() {
+  const { addToast } = useToast();
+  const navigate = useNavigate();
+  const [projects, setProjects] = useState<ProjectRecord[]>(() => loadProjects());
+
+  const handleCreate = async (values: ProjectValues) => {
+    const { project, projects: nextProjects } = createProject(values, projects);
+    setProjects(nextProjects);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    addToast({
+      title: "Project created",
+      description: "Ready to edit the details.",
+      tone: "success",
+    });
+    navigate(`/projects/${project.id}`);
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -18,6 +37,17 @@ export default function Projects() {
           Select a project to view details.
         </p>
       </div>
+
+      <Card className="space-y-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Create</p>
+          <h3 className="text-lg font-semibold">New project</h3>
+          <p className="mt-1 text-sm text-slate-500">
+            Capture a new project and keep the summary short.
+          </p>
+        </div>
+        <ProjectForm submitLabel="Create project" onSubmit={handleCreate} resetOnSubmit />
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-2">
         {projects.map((project) => (

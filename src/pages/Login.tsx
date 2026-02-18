@@ -1,26 +1,36 @@
-import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
+import { FormField } from "../components/FormField";
 import { Input } from "../components/Input";
 import { useAuth } from "../state/auth";
+import { loginSchema, type LoginValues } from "../forms/schemas";
 
 type LocationState = {
   from?: { pathname?: string };
 };
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState | null;
   const redirectTo = state?.from?.pathname ?? "/dashboard";
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
+  });
+
+  const onSubmit = async () => {
+    await new Promise((resolve) => setTimeout(resolve, 400));
     login();
     navigate(redirectTo, { replace: true });
   };
@@ -36,31 +46,31 @@ export default function Login() {
           </p>
         </div>
 
-        <form className="space-y-3" onSubmit={handleSubmit}>
-          <label className="block text-sm text-slate-600">
-            Email
+        <form
+          className="space-y-3"
+          onSubmit={handleSubmit(onSubmit)}
+          aria-busy={isSubmitting || undefined}
+        >
+          <FormField label="Email" error={errors.email?.message} required>
             <Input
               type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
               placeholder="you@company.com"
-              className="mt-1"
-              required
+              autoComplete="email"
+              disabled={isSubmitting}
+              {...register("email")}
             />
-          </label>
-          <label className="block text-sm text-slate-600">
-            Password
+          </FormField>
+          <FormField label="Password" error={errors.password?.message} required>
             <Input
               type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
               placeholder="Your password"
-              className="mt-1"
-              required
+              autoComplete="current-password"
+              disabled={isSubmitting}
+              {...register("password")}
             />
-          </label>
-          <Button type="submit" className="w-full">
-            Sign in
+          </FormField>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Signing in..." : "Sign in"}
           </Button>
         </form>
       </Card>
