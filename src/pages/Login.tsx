@@ -29,9 +29,9 @@ export default function Login() {
     defaultValues: { email: "", password: "" },
   });
 
-  const onSubmit = async () => {
+  const onSubmit = async (values: LoginValues) => {
     await new Promise((resolve) => setTimeout(resolve, 400));
-    login();
+    login({ email: values.email });
     navigate(redirectTo, { replace: true });
   };
 

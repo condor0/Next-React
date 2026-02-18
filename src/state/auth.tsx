@@ -1,29 +1,40 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
 
-type AuthContextValue = {
-  isAuthed: boolean;
-  login: () => void;
+export type AuthUser = {
+  name: string;
+  email: string;
+};
+
+type AuthState = {
+  // Auth slice: user identity and in-memory token
+  user: AuthUser | null;
+  token: string | null;
+  login: (payload: { email: string; name?: string }) => void;
   logout: () => void;
 };
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  token: null,
+  login: ({ email, name }) => {
+    const displayName = name ?? email.split("@")[0] ?? "User";
+    set({
+      user: { name: displayName, email },
+      token: `token-${Date.now()}`,
+    });
+  },
+  logout: () => set({ user: null, token: null }),
+}));
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthed, setIsAuthed] = useState(false);
-
-  const login = useCallback(() => setIsAuthed(true), []);
-  const logout = useCallback(() => setIsAuthed(false), []);
-
-  const value = useMemo(() => ({ isAuthed, login, logout }), [isAuthed, login, logout]);
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-  return ctx;
+  return useAuthStore(
+    useShallow((state) => ({
+      user: state.user,
+      token: state.token,
+      isAuthed: Boolean(state.token),
+      login: state.login,
+      logout: state.logout,
+    })),
+  );
 }

@@ -5,7 +5,7 @@ import { Card } from "../components/Card";
 import { Input } from "../components/Input";
 import { Modal } from "../components/Modal";
 import { Skeleton } from "../components/Skeleton";
-import { useToast } from "../components/toastContext";
+import { useToast } from "../state/uiStore";
 
 const collections = ["Overview", "Projects", "References", "Journal", "Archive"];
 
