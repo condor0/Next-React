@@ -1,24 +1,49 @@
 import { Link, useParams } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Card } from "../components/Card";
 import { ProjectForm } from "../components/ProjectForm";
+import { QueryState } from "../components/QueryState";
 import { useToast } from "../state/uiStore";
 import type { ProjectValues } from "../forms/schemas";
-import {
-  getProjectById,
-  loadProjects,
-  updateProject,
-  type ProjectRecord,
-} from "../state/projectsStore";
+import { getProject, updateProjectApi } from "../api/projects";
+import { getErrorMessage } from "../api/client";
 
 export default function ProjectDetail() {
   const { id } = useParams();
   const { addToast } = useToast();
-  const [projects, setProjects] = useState<ProjectRecord[]>(() => loadProjects());
-  const [project, setProject] = useState<ProjectRecord | null>(() =>
-    getProjectById(id),
-  );
+  const queryClient = useQueryClient();
+  const {
+    data: project,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["project", id],
+    queryFn: () => getProject(id as string),
+    enabled: Boolean(id),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (values: ProjectValues) => updateProjectApi(id as string, values),
+    onSuccess: (updatedProject) => {
+      queryClient.invalidateQueries({ queryKey: ["project", updatedProject.id] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      addToast({
+        title: "Project updated",
+        description: "Edits are saved in this mock flow.",
+        tone: "success",
+      });
+    },
+    onError: (mutationError) => {
+      addToast({
+        title: "Unable to update project",
+        description: getErrorMessage(mutationError),
+        tone: "error",
+      });
+    },
+  });
 
   const defaultValues = useMemo<Partial<ProjectValues>>(() => {
     if (project) {
@@ -42,30 +67,40 @@ export default function ProjectDetail() {
   }, [id, project]);
 
   const handleSave = async (values: ProjectValues) => {
-    if (id) {
-      const nextProjects = updateProject(id, values, projects);
-      setProjects(nextProjects);
-      setProject(nextProjects.find((item) => item.id === id) ?? null);
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    addToast({
-      title: "Project updated",
-      description: "Edits are saved in this mock flow.",
-      tone: "success",
-    });
+    if (!id) return;
+    await updateMutation.mutateAsync(values);
   };
+
+  const headingName = isLoading ? "Loading..." : project?.name ?? id ?? "Unknown";
 
   return (
     <div className="space-y-4">
       <div>
         <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Project</p>
-        <h2 className="text-2xl font-semibold">{project?.name ?? id ?? "Unknown"}</h2>
+        <h2 className="text-2xl font-semibold">{headingName}</h2>
         <p className="mt-2 text-sm text-slate-500">
           Project detail routes.
         </p>
       </div>
 
-      {project ? (
+      {!id ? (
+        <QueryState
+          tone="error"
+          title="Missing project id"
+          description="Open the project from the projects list."
+        />
+      ) : isLoading ? (
+        <QueryState
+          title="Loading project"
+          description="Fetching the latest status update."
+        />
+      ) : isError ? (
+        <QueryState
+          tone="error"
+          title="Unable to load project"
+          description={getErrorMessage(error)}
+        />
+      ) : project ? (
         <Card className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -86,23 +121,30 @@ export default function ProjectDetail() {
             </p>
           </div>
         </Card>
-      ) : null}
-
-      <Card className="space-y-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Edit</p>
-          <h3 className="text-lg font-semibold">Project details</h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Update status and summary before sharing with stakeholders.
-          </p>
-        </div>
-        <ProjectForm
-          key={project?.id ?? id}
-          submitLabel="Save changes"
-          onSubmit={handleSave}
-          defaultValues={defaultValues}
+      ) : (
+        <QueryState
+          title="Project not found"
+          description="Check the link or return to the projects list."
         />
-      </Card>
+      )}
+
+      {id && !isError && !isLoading ? (
+        <Card className="space-y-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Edit</p>
+            <h3 className="text-lg font-semibold">Project details</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Update status and summary before sharing with stakeholders.
+            </p>
+          </div>
+          <ProjectForm
+            key={project?.id ?? id}
+            submitLabel="Save changes"
+            onSubmit={handleSave}
+            defaultValues={defaultValues}
+          />
+        </Card>
+      ) : null}
 
       <Card className="space-y-2">
         <p className="text-sm text-slate-600">
