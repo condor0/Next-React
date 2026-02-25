@@ -1,12 +1,14 @@
-import { Link, useParams } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
+import { Input } from "../components/Input";
 import { Modal } from "../components/Modal";
 import { ProjectForm } from "../components/ProjectForm";
 import { QueryState } from "../components/QueryState";
+import { Select } from "../components/Select";
 import { TaskForm } from "../components/TaskForm";
 import { useToast } from "../state/uiStore";
 import type { ProjectValues, TaskStatus, TaskValues } from "../forms/schemas";
@@ -25,11 +27,18 @@ import {
   getAllowedTaskStatuses,
   taskStatusLabels,
 } from "../utils/taskRules";
+import { useDebouncedValue } from "../utils/useDebouncedValue";
 
 export default function ProjectDetail() {
   const { id } = useParams();
   const { addToast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [taskQueryInput, setTaskQueryInput] = useState(
+    searchParams.get("tq") ?? "",
+  );
+  const debouncedTaskQuery = useDebouncedValue(taskQueryInput.trim(), 350);
+  const taskStatusParam = searchParams.get("tstatus") ?? "all";
   const [activeTask, setActiveTask] = useState<TaskRecord | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const {
@@ -54,6 +63,20 @@ export default function ProjectDetail() {
     queryFn: () => listTasks(id as string),
     enabled: Boolean(id),
   });
+
+  useEffect(() => {
+    const currentQuery = searchParams.get("tq") ?? "";
+    if (currentQuery === debouncedTaskQuery) return;
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (debouncedTaskQuery) {
+        next.set("tq", debouncedTaskQuery);
+      } else {
+        next.delete("tq");
+      }
+      return next;
+    });
+  }, [debouncedTaskQuery, searchParams, setSearchParams]);
 
   const updateMutation = useMutation({
     mutationFn: (values: ProjectValues) => updateProjectApi(id as string, values),
@@ -253,6 +276,18 @@ export default function ProjectDetail() {
     moveTaskMutation.mutate({ taskId, status });
   };
 
+  const handleTaskStatusChange = (value: string) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (value === "all") {
+        next.delete("tstatus");
+      } else {
+        next.set("tstatus", value);
+      }
+      return next;
+    });
+  };
+
   const openTaskModal = (task: TaskRecord) => {
     setActiveTask(task);
     setIsTaskModalOpen(true);
@@ -265,16 +300,29 @@ export default function ProjectDetail() {
 
   const headingName = isLoading ? "Loading..." : project?.name ?? id ?? "Unknown";
   const canShowTasks = Boolean(id) && Boolean(project) && !isLoading && !isError;
+  const normalizedTaskQuery = debouncedTaskQuery.toLowerCase();
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      const matchesStatus =
+        taskStatusParam === "all" ? true : task.status === taskStatusParam;
+      const matchesQuery = normalizedTaskQuery
+        ? `${task.title} ${task.description}`
+            .toLowerCase()
+            .includes(normalizedTaskQuery)
+        : true;
+      return matchesStatus && matchesQuery;
+    });
+  }, [tasks, normalizedTaskQuery, taskStatusParam]);
   const tasksByStatus = useMemo(() => {
     const grouped = taskStatusOptions.reduce(
       (acc, status) => ({ ...acc, [status]: [] }),
       {} as Record<TaskStatus, TaskRecord[]>,
     );
-    tasks.forEach((task) => {
+    filteredTasks.forEach((task) => {
       grouped[task.status].push(task);
     });
     return grouped;
-  }, [tasks]);
+  }, [filteredTasks]);
 
   return (
     <div className="space-y-4">
@@ -366,6 +414,45 @@ export default function ProjectDetail() {
             />
           </Card>
 
+          <Card className="space-y-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Search</p>
+              <h3 className="text-lg font-semibold">Find tasks</h3>
+              <p className="mt-1 text-sm text-slate-500">
+                Filter by title, details, and status.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
+              <label className="space-y-2">
+                <span className="text-xs uppercase tracking-[0.18em] text-slate-400">
+                  Search
+                </span>
+                <Input
+                  type="search"
+                  value={taskQueryInput}
+                  onChange={(event) => setTaskQueryInput(event.target.value)}
+                  placeholder="Search tasks"
+                />
+              </label>
+              <label className="space-y-2">
+                <span className="text-xs uppercase tracking-[0.18em] text-slate-400">
+                  Status
+                </span>
+                <Select
+                  value={taskStatusParam}
+                  onChange={(event) => handleTaskStatusChange(event.target.value)}
+                >
+                  <option value="all">All</option>
+                  {taskStatusOptions.map((status) => (
+                    <option key={status} value={status}>
+                      {taskStatusLabels[status]}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+            </div>
+          </Card>
+
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
@@ -389,10 +476,14 @@ export default function ProjectDetail() {
               title="Unable to load tasks"
               description={getErrorMessage(tasksErrorDetails)}
             />
-          ) : tasks.length === 0 ? (
+          ) : filteredTasks.length === 0 ? (
             <QueryState
-              title="No tasks yet"
-              description="Add the first task to get started."
+              title={tasks.length === 0 ? "No tasks yet" : "No matching tasks"}
+              description={
+                tasks.length === 0
+                  ? "Add the first task to get started."
+                  : "Try adjusting your search or filters."
+              }
             />
           ) : (
             <div className="grid gap-4 lg:grid-cols-3" aria-busy={tasksFetching}>
