@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 
 import { Card } from "../components/Card";
 import { ProjectForm } from "../components/ProjectForm";
-import { useToast } from "../components/toastContext";
+import { useToast } from "../state/uiStore";
 import type { ProjectValues } from "../forms/schemas";
 import {
   getProjectById,

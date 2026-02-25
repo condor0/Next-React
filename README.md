@@ -22,3 +22,4 @@ npm run dev
 - See docs/day-01.md for setup notes and decisions.
 - See docs/day-02.md for UI primitives and state drills.
 - See docs/day-04.md for forms and validation work.
+- See docs/day-05.md for client state with Zustand.

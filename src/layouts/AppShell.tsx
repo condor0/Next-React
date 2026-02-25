@@ -9,7 +9,7 @@ const navItems = [
 ];
 
 export function AppShell() {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -43,6 +43,11 @@ export function AppShell() {
                 {item.label}
               </NavLink>
             ))}
+            {user ? (
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">
+                {user.name}
+              </span>
+            ) : null}
             <Button variant="outline" size="sm" onClick={handleLogout}>
               Log out
             </Button>
