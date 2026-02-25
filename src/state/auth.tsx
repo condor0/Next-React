@@ -7,7 +7,7 @@ export type AuthUser = {
 };
 
 type AuthState = {
-  // Auth slice: user identity and in-memory token
+// Auth slice: user identity and in-memory token
   user: AuthUser | null;
   token: string | null;
   login: (payload: { email: string; name?: string }) => void;
