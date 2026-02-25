@@ -41,13 +41,6 @@ export default function Projects() {
 
   useEffect(() => {
     const currentQuery = searchParams.get("q") ?? "";
-    setQueryInput((previous) =>
-      previous === currentQuery ? previous : currentQuery,
-    );
-  }, [searchParams]);
-
-  useEffect(() => {
-    const currentQuery = searchParams.get("q") ?? "";
     if (currentQuery === debouncedQuery) return;
     setSearchParams((previous) => {
       const next = new URLSearchParams(previous);

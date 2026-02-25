@@ -521,6 +521,8 @@ export default function ProjectDetail() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => openTaskModal(task)}
+                                aria-haspopup="dialog"
+                                aria-controls="edit-task-modal"
                               >
                                 Edit
                               </Button>
@@ -562,6 +564,7 @@ export default function ProjectDetail() {
 
       <Modal
         open={isTaskModalOpen}
+        id="edit-task-modal"
         title="Edit task"
         onClose={closeTaskModal}
         footer={
