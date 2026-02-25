@@ -31,3 +31,18 @@ export const projectSchema = z.object({
 })
 
 export type ProjectValues = z.infer<typeof projectSchema>
+
+export const taskStatusOptions = ['todo', 'doing', 'done'] as const
+
+export type TaskStatus = (typeof taskStatusOptions)[number]
+
+export const taskSchema = z.object({
+  title: z.string().min(2, 'Task title is required'),
+  status: z.enum(taskStatusOptions),
+  description: z
+    .string()
+    .min(4, 'Description must be at least 4 characters')
+    .max(200, 'Description must be at most 200 characters'),
+})
+
+export type TaskValues = z.infer<typeof taskSchema>
