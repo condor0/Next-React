@@ -84,7 +84,7 @@ export default function Dashboard() {
       <header className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-white/80 p-5 shadow-soft">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Today</p>
-          <h2 className="text-2xl font-semibold">Day 3 - Routing Demo</h2>
+          <h2 className="text-2xl font-semibold">React Demo</h2>
           <p className="mt-2 text-sm text-slate-500">
             Active: {activeCollection} - {filteredNotes.length} of {statusCounts.total} notes
           </p>
