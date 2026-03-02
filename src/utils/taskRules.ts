@@ -26,7 +26,7 @@ export function canTransitionTaskStatus(from: TaskStatus, to: TaskStatus) {
 let hasRun = false
 
 export function runTaskRuleChecks() {
-  if (hasRun || import.meta.env.PROD) return
+  if (hasRun || process.env.NODE_ENV === 'production') return
   hasRun = true
 
   console.assert(
