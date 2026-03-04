@@ -30,23 +30,22 @@ export function normalizeError(error: unknown): ApiClientError {
   return new ApiClientError('Unexpected error. Please try again.')
 }
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-export async function request<T>(
-  fn: () => T | Promise<T>,
-  options?: { delayMs?: number },
+export async function fetchJson<T>(
+  url: string,
+  options?: RequestInit,
 ): Promise<T> {
-  try {
-    const result = await fn()
-    if (options?.delayMs) {
-      await delay(options.delayMs)
-    }
-    return result
-  } catch (error) {
-    throw normalizeError(error)
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    ...options,
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new ApiClientError(
+      body?.message ?? `Request failed (${res.status})`,
+      { status: res.status, code: body?.code, details: body?.details },
+    )
   }
+  return body as T
 }
 
 export function getErrorMessage(error: unknown, fallback = 'Something went wrong.') {
