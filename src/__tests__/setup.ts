@@ -1,10 +1,18 @@
 import { afterAll, beforeAll, afterEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { setupServer } from 'msw/node';
+import { http, HttpResponse } from 'msw';
 import type { ReactElement } from 'react';
 import type { RenderOptions } from '@testing-library/react';
 
-const server = setupServer();
+export const server = setupServer(
+  http.get('/api/success', () => {
+    return HttpResponse.json({ message: 'Success' });
+  }),
+  http.get('/api/error', () => {
+    return HttpResponse.json({ message: 'Error' }, { status: 500 });
+  }),
+);
 
 // Mock localStorage
 const localStorageMock = (() => {

@@ -1,18 +1,26 @@
 import { NextResponse } from 'next/server'
 import { getTaskById, updateTask, moveTaskStatus } from '@/lib/data/tasks'
-import { taskSchema } from '@/forms/schemas'
+import { taskSchema, taskStatusOptions } from '@/forms/schemas'
 import { z } from 'zod'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
 const moveSchema = z.object({
   action: z.literal('move'),
-  status: z.enum(['todo', 'doing', 'done']),
+  status: z.enum(taskStatusOptions),
 })
 
 export async function PATCH(request: Request, context: RouteContext) {
   const { id } = await context.params
-  const body = await request.json()
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json(
+      { message: 'Invalid JSON body.', code: 'INVALID_JSON' },
+      { status: 400 },
+    )
+  }
 
   /* move-status shorthand: { action: "move", status: "done" } */
   const moveResult = moveSchema.safeParse(body)
@@ -51,5 +59,7 @@ export async function GET(_request: Request, context: RouteContext) {
   if (!task) {
     return NextResponse.json({ message: 'Task not found.', code: 'TASK_NOT_FOUND' }, { status: 404 })
   }
-  return NextResponse.json(task)
+  return NextResponse.json(task, {
+    headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120' },
+  })
 }

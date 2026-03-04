@@ -7,7 +7,7 @@ export function listProjects() {
 }
 
 export function getProject(id: string) {
-  return fetchJson<ProjectRecord>(`/api/projects/${id}`)
+  return fetchJson<ProjectRecord>(`/api/projects/${encodeURIComponent(id)}`)
 }
 
 export function createProjectApi(values: ProjectValues) {
@@ -18,7 +18,7 @@ export function createProjectApi(values: ProjectValues) {
 }
 
 export function updateProjectApi(id: string, values: ProjectValues) {
-  return fetchJson<ProjectRecord>(`/api/projects/${id}`, {
+  return fetchJson<ProjectRecord>(`/api/projects/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     body: JSON.stringify(values),
   })

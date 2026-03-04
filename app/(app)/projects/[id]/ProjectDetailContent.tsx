@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { Input } from "@/components/Input";
 import { Modal } from "@/components/Modal";
@@ -490,13 +489,7 @@ function ProjectDetailInner({ id }: { id: string }) {
             id="task-detail-modal"
             title={activeTask ? "Edit task" : "View task"}
             onClose={closeTaskModal}
-            footer={
-              activeTask && (
-                <Button onClick={() => handleUpdateTask(activeTask)}>
-                  Save task
-                </Button>
-              )
-            }
+            footer={null}
           >
             {activeTask ? (
               <TaskForm

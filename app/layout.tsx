@@ -1,17 +1,20 @@
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const metadata = {
-  title: "Research Workspace",
+export const metadata: Metadata = {
+  title: {
+    default: "Research Workspace",
+    template: "%s | Research Workspace",
+  },
   description: "Field notes and project management",
 };
-
-export { metadata };
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <html lang="en">

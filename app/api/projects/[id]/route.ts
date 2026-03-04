@@ -13,12 +13,22 @@ export async function GET(_request: Request, context: RouteContext) {
       { status: 404 },
     )
   }
-  return NextResponse.json(project)
+  return NextResponse.json(project, {
+    headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
+  })
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
   const { id } = await context.params
-  const body = await request.json()
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json(
+      { message: 'Invalid JSON body.', code: 'INVALID_JSON' },
+      { status: 400 },
+    )
+  }
   const parsed = projectSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json(

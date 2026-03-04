@@ -10,7 +10,9 @@ export async function GET(request: NextRequest) {
       { status: 400 },
     )
   }
-  return NextResponse.json(listTasksForProject(projectId))
+  return NextResponse.json(listTasksForProject(projectId), {
+    headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120' },
+  })
 }
 
 export async function POST(request: NextRequest) {
@@ -21,7 +23,15 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     )
   }
-  const body = await request.json()
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json(
+      { message: 'Invalid JSON body.', code: 'INVALID_JSON' },
+      { status: 400 },
+    )
+  }
   const parsed = taskSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json(

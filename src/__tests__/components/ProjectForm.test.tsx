@@ -1,12 +1,7 @@
-import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ProjectForm } from '../../components/ProjectForm';
-import { server } from '../mocks/server';
-
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
 
 describe('ProjectForm', () => {
   it('renders ProjectForm component', () => {
