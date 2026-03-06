@@ -13,15 +13,15 @@ Open [http://localhost:3000](http://localhost:3000). The app redirects to `/logi
 
 ## Scripts
 
-| Script                  | Description                              |
-| ----------------------- | ---------------------------------------- |
-| `npm run dev`           | Start the Next.js dev server             |
-| `npm run build`         | Production build                         |
-| `npm start`             | Serve the production build               |
-| `npm run lint`          | Run ESLint                               |
-| `npm run format`        | Prettier check                           |
-| `npm test`              | Run Vitest in watch mode                 |
-| `npm run test:coverage` | Run Vitest with coverage                 |
+| Script                  | Description                  |
+| ----------------------- | ---------------------------- |
+| `npm run dev`           | Start the Next.js dev server |
+| `npm run build`         | Production build             |
+| `npm start`             | Serve the production build   |
+| `npm run lint`          | Run ESLint                   |
+| `npm run format`        | Prettier check               |
+| `npm test`              | Run Vitest in watch mode     |
+| `npm run test:coverage` | Run Vitest with coverage     |
 
 ## Architecture
 
