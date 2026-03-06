@@ -1,47 +1,41 @@
-"use client";
+'use client'
 
-import { Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card } from "@/components/Card";
-import { Input } from "@/components/Input";
-import { Modal } from "@/components/Modal";
-import { ProjectForm } from "@/components/ProjectForm";
-import { QueryState } from "@/components/QueryState";
-import { Select } from "@/components/Select";
-import { TaskForm } from "@/components/TaskForm";
-import { useToast } from "@/state/uiStore";
-import type {
-  ProjectValues,
-  TaskStatus,
-  TaskValues,
-} from "@/forms/schemas";
-import { taskStatusOptions } from "@/forms/schemas";
-import { getProject, updateProjectApi } from "@/api/projects";
+import { Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Card } from '@/components/Card'
+import { Input } from '@/components/Input'
+import { Modal } from '@/components/Modal'
+import { ProjectForm } from '@/components/ProjectForm'
+import { QueryState } from '@/components/QueryState'
+import { Select } from '@/components/Select'
+import { TaskForm } from '@/components/TaskForm'
+import { useToast } from '@/state/uiStore'
+import type { ProjectValues, TaskStatus, TaskValues } from '@/forms/schemas'
+import { taskStatusOptions } from '@/forms/schemas'
+import { getProject, updateProjectApi } from '@/api/projects'
 import {
   createTaskApi,
   listTasks,
   moveTaskStatusApi,
   updateTaskApi,
   type TaskRecord,
-} from "@/api/tasks";
-import { getErrorMessage } from "@/api/client";
-import { useDebouncedValue } from "@/utils/useDebouncedValue";
-import { getAllowedTaskStatuses } from "@/utils/taskRules";
+} from '@/api/tasks'
+import { getErrorMessage } from '@/api/client'
+import { useDebouncedValue } from '@/utils/useDebouncedValue'
+import { getAllowedTaskStatuses } from '@/utils/taskRules'
 
 function ProjectDetailInner({ id }: { id: string }) {
-  const { addToast } = useToast();
-  const queryClient = useQueryClient();
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const [taskQueryInput, setTaskQueryInput] = useState(
-    searchParams.get("tq") ?? "",
-  );
-  const debouncedTaskQuery = useDebouncedValue(taskQueryInput.trim(), 350);
-  const taskStatusParam = searchParams.get("tstatus") ?? "all";
-  const [activeTask, setActiveTask] = useState<TaskRecord | null>(null);
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const { addToast } = useToast()
+  const queryClient = useQueryClient()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const [taskQueryInput, setTaskQueryInput] = useState(searchParams.get('tq') ?? '')
+  const debouncedTaskQuery = useDebouncedValue(taskQueryInput.trim(), 350)
+  const taskStatusParam = searchParams.get('tstatus') ?? 'all'
+  const [activeTask, setActiveTask] = useState<TaskRecord | null>(null)
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
 
   const {
     data: project,
@@ -49,10 +43,10 @@ function ProjectDetailInner({ id }: { id: string }) {
     isError,
     error,
   } = useQuery({
-    queryKey: ["project", id],
+    queryKey: ['project', id],
     queryFn: () => getProject(id),
     enabled: Boolean(id),
-  });
+  })
 
   const {
     data: tasks = [],
@@ -60,48 +54,48 @@ function ProjectDetailInner({ id }: { id: string }) {
     isError: tasksError,
     error: tasksErrorDetails,
   } = useQuery({
-    queryKey: ["tasks", id],
+    queryKey: ['tasks', id],
     queryFn: () => listTasks(id),
     enabled: Boolean(id),
-  });
+  })
 
   useEffect(() => {
-    const currentQuery = searchParams.get("tq") ?? "";
-    if (currentQuery === debouncedTaskQuery) return;
-    const params = new URLSearchParams(searchParams.toString());
+    const currentQuery = searchParams.get('tq') ?? ''
+    if (currentQuery === debouncedTaskQuery) return
+    const params = new URLSearchParams(searchParams.toString())
     if (debouncedTaskQuery) {
-      params.set("tq", debouncedTaskQuery);
+      params.set('tq', debouncedTaskQuery)
     } else {
-      params.delete("tq");
+      params.delete('tq')
     }
-    router.push(`/projects/${id}?${params.toString()}`);
-  }, [debouncedTaskQuery, searchParams, id, router]);
+    router.push(`/projects/${id}?${params.toString()}`)
+  }, [debouncedTaskQuery, searchParams, id, router])
 
   const updateMutation = useMutation({
     mutationFn: (values: ProjectValues) => updateProjectApi(id, values),
     onSuccess: (updatedProject) => {
-      queryClient.invalidateQueries({ queryKey: ["project", updatedProject.id] });
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ['project', updatedProject.id] })
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
       addToast({
-        title: "Project updated",
-        description: "Edits are saved in this mock flow.",
-        tone: "success",
-      });
+        title: 'Project updated',
+        description: 'Edits are saved in this mock flow.',
+        tone: 'success',
+      })
     },
     onError: (mutationError) => {
       addToast({
-        title: "Unable to update project",
+        title: 'Unable to update project',
         description: getErrorMessage(mutationError),
-        tone: "error",
-      });
+        tone: 'error',
+      })
     },
-  });
+  })
 
   const createTaskMutation = useMutation({
     mutationFn: (values: TaskValues) => createTaskApi(id, values),
     onMutate: async (values) => {
-      await queryClient.cancelQueries({ queryKey: ["tasks", id] });
-      const previous = queryClient.getQueryData<TaskRecord[]>(["tasks", id]) ?? [];
+      await queryClient.cancelQueries({ queryKey: ['tasks', id] })
+      const previous = queryClient.getQueryData<TaskRecord[]>(['tasks', id]) ?? []
       const optimisticTask: TaskRecord = {
         id: `temp-${Date.now()}`,
         projectId: id,
@@ -110,45 +104,42 @@ function ProjectDetailInner({ id }: { id: string }) {
         status: values.status,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      };
-      queryClient.setQueryData<TaskRecord[]>(["tasks", id], [
-        optimisticTask,
-        ...previous,
-      ]);
-      return { previous, optimisticId: optimisticTask.id };
+      }
+      queryClient.setQueryData<TaskRecord[]>(['tasks', id], [optimisticTask, ...previous])
+      return { previous, optimisticId: optimisticTask.id }
     },
     onSuccess: (task, _values, context) => {
-      queryClient.setQueryData<TaskRecord[]>(["tasks", id], (current = []) =>
+      queryClient.setQueryData<TaskRecord[]>(['tasks', id], (current = []) =>
         current.map((item) => (item.id === context?.optimisticId ? task : item)),
-      );
+      )
       addToast({
-        title: "Task created",
-        description: "Ready for the next step.",
-        tone: "success",
-      });
+        title: 'Task created',
+        description: 'Ready for the next step.',
+        tone: 'success',
+      })
     },
     onError: (mutationError, _values, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(["tasks", id], context.previous);
+        queryClient.setQueryData(['tasks', id], context.previous)
       }
       addToast({
-        title: "Unable to create task",
+        title: 'Unable to create task',
         description: getErrorMessage(mutationError),
-        tone: "error",
-      });
+        tone: 'error',
+      })
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks", id] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', id] })
     },
-  });
+  })
 
   const updateTaskMutation = useMutation({
     mutationFn: ({ taskId, values }: { taskId: string; values: TaskValues }) =>
       updateTaskApi(taskId, values),
     onMutate: async ({ taskId, values }) => {
-      await queryClient.cancelQueries({ queryKey: ["tasks", id] });
-      const previous = queryClient.getQueryData<TaskRecord[]>(["tasks", id]) ?? [];
-      queryClient.setQueryData<TaskRecord[]>(["tasks", id], (current = []) =>
+      await queryClient.cancelQueries({ queryKey: ['tasks', id] })
+      const previous = queryClient.getQueryData<TaskRecord[]>(['tasks', id]) ?? []
+      queryClient.setQueryData<TaskRecord[]>(['tasks', id], (current = []) =>
         current.map((task) =>
           task.id === taskId
             ? {
@@ -158,68 +149,68 @@ function ProjectDetailInner({ id }: { id: string }) {
               }
             : task,
         ),
-      );
-      return { previous };
+      )
+      return { previous }
     },
     onSuccess: (task) => {
-      queryClient.setQueryData<TaskRecord[]>(["tasks", id], (current = []) =>
+      queryClient.setQueryData<TaskRecord[]>(['tasks', id], (current = []) =>
         current.map((item) => (item.id === task.id ? task : item)),
-      );
+      )
       addToast({
-        title: "Task updated",
-        description: "Changes are saved.",
-        tone: "success",
-      });
+        title: 'Task updated',
+        description: 'Changes are saved.',
+        tone: 'success',
+      })
     },
     onError: (mutationError, _values, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(["tasks", id], context.previous);
+        queryClient.setQueryData(['tasks', id], context.previous)
       }
       addToast({
-        title: "Unable to update task",
+        title: 'Unable to update task',
         description: getErrorMessage(mutationError),
-        tone: "error",
-      });
+        tone: 'error',
+      })
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks", id] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', id] })
     },
-  });
+  })
 
   const moveTaskMutation = useMutation({
     mutationFn: ({ taskId, status }: { taskId: string; status: TaskStatus }) =>
       moveTaskStatusApi(taskId, status),
     onMutate: async ({ taskId, status }) => {
-      await queryClient.cancelQueries({ queryKey: ["tasks", id] });
-      const previous = queryClient.getQueryData<TaskRecord[]>(["tasks", id]) ?? [];
-      queryClient.setQueryData<TaskRecord[]>(["tasks", id], (current = []) =>
+      await queryClient.cancelQueries({ queryKey: ['tasks', id] })
+      const previous = queryClient.getQueryData<TaskRecord[]>(['tasks', id]) ?? []
+      queryClient.setQueryData<TaskRecord[]>(['tasks', id], (current = []) =>
         current.map((task) =>
           task.id === taskId
             ? { ...task, status, updatedAt: new Date().toISOString() }
             : task,
         ),
-      );
-      return { previous };
+      )
+      return { previous }
     },
     onSuccess: (task) => {
-      queryClient.setQueryData<TaskRecord[]>(["tasks", id], (current = []) =>
+      queryClient.setQueryData<TaskRecord[]>(['tasks', id], (current = []) =>
         current.map((item) => (item.id === task.id ? task : item)),
-      );
+      )
     },
     onError: (mutationError, _values, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(["tasks", id], context.previous);
+        queryClient.setQueryData(['tasks', id], context.previous)
       }
       addToast({
-        title: "Unable to move task",
+        title: 'Unable to move task',
         description: getErrorMessage(mutationError),
-        tone: "error",
-      });
+        tone: 'error',
+      })
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks", id] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', id] })
     },
-  });
+  })
 
   const defaultValues = useMemo<Partial<ProjectValues>>(() => {
     if (project) {
@@ -228,97 +219,91 @@ function ProjectDetailInner({ id }: { id: string }) {
         status: project.status,
         ownerEmail: project.ownerEmail,
         description: project.description,
-      };
+      }
     }
 
     const label = id
-      ? id.replace(/(^.|-.)/g, (match: string) =>
-          match.replace("-", " ").toUpperCase(),
-        )
-      : "";
+      ? id.replace(/(^.|-.)/g, (match: string) => match.replace('-', ' ').toUpperCase())
+      : ''
     return {
-      name: label || "Untitled project",
-      status: "In progress",
-      ownerEmail: "owner@company.com",
-      description: "Outline the next milestone and key risks for this project.",
-    };
-  }, [id, project]);
+      name: label || 'Untitled project',
+      status: 'In progress',
+      ownerEmail: 'owner@company.com',
+      description: 'Outline the next milestone and key risks for this project.',
+    }
+  }, [id, project])
 
   const handleSave = async (values: ProjectValues) => {
-    await updateMutation.mutateAsync(values);
-  };
+    await updateMutation.mutateAsync(values)
+  }
 
   const handleCreateTask = async (values: TaskValues) => {
-    await createTaskMutation.mutateAsync(values);
-  };
+    await createTaskMutation.mutateAsync(values)
+  }
 
   const handleUpdateTask = async (values: TaskValues) => {
-    if (!activeTask) return;
+    if (!activeTask) return
     try {
-      await updateTaskMutation.mutateAsync({ taskId: activeTask.id, values });
-      setIsTaskModalOpen(false);
-      setActiveTask(null);
+      await updateTaskMutation.mutateAsync({ taskId: activeTask.id, values })
+      setIsTaskModalOpen(false)
+      setActiveTask(null)
     } catch {
       // Keep modal open so the user can retry
     }
-  };
+  }
 
   const handleMoveTask = (taskId: string, status: TaskStatus) => {
-    moveTaskMutation.mutate({ taskId, status });
-  };
+    moveTaskMutation.mutate({ taskId, status })
+  }
 
   const handleTaskStatusChange = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value === "all") {
-      params.delete("tstatus");
+    const params = new URLSearchParams(searchParams.toString())
+    if (value === 'all') {
+      params.delete('tstatus')
     } else {
-      params.set("tstatus", value);
+      params.set('tstatus', value)
     }
-    router.push(`/projects/${id}?${params.toString()}`);
-  };
+    router.push(`/projects/${id}?${params.toString()}`)
+  }
 
   const openTaskModal = (task: TaskRecord) => {
-    setActiveTask(task);
-    setIsTaskModalOpen(true);
-  };
+    setActiveTask(task)
+    setIsTaskModalOpen(true)
+  }
 
   const closeTaskModal = () => {
-    setActiveTask(null);
-    setIsTaskModalOpen(false);
-  };
+    setActiveTask(null)
+    setIsTaskModalOpen(false)
+  }
 
-  const headingName = isLoading ? "Loading..." : project?.name ?? id ?? "Unknown";
-  const normalizedTaskQuery = debouncedTaskQuery.toLowerCase();
+  const headingName = isLoading ? 'Loading...' : (project?.name ?? id ?? 'Unknown')
+  const normalizedTaskQuery = debouncedTaskQuery.toLowerCase()
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
       const matchesStatus =
-        taskStatusParam === "all" ? true : task.status === taskStatusParam;
+        taskStatusParam === 'all' ? true : task.status === taskStatusParam
       const matchesQuery = normalizedTaskQuery
-        ? `${task.title} ${task.description}`
-            .toLowerCase()
-            .includes(normalizedTaskQuery)
-        : true;
-      return matchesStatus && matchesQuery;
-    });
-  }, [tasks, normalizedTaskQuery, taskStatusParam]);
+        ? `${task.title} ${task.description}`.toLowerCase().includes(normalizedTaskQuery)
+        : true
+      return matchesStatus && matchesQuery
+    })
+  }, [tasks, normalizedTaskQuery, taskStatusParam])
 
   const tasksByStatus = useMemo(() => {
     const grouped = taskStatusOptions.reduce(
       (acc, status) => ({ ...acc, [status]: [] }),
       {} as Record<TaskStatus, TaskRecord[]>,
-    );
+    )
     filteredTasks.forEach((task) => {
-      grouped[task.status].push(task);
-    });
-    return grouped;
-  }, [filteredTasks]);
+      grouped[task.status].push(task)
+    })
+    return grouped
+  }, [filteredTasks])
 
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-          Project
-        </p>
+        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Project</p>
         <h2 className="text-2xl font-semibold">{headingName}</h2>
         <p className="mt-2 text-sm text-slate-500">Project detail routes.</p>
       </div>
@@ -360,9 +345,7 @@ function ProjectDetailInner({ id }: { id: string }) {
 
           <Card className="space-y-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                Create
-              </p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Create</p>
               <h3 className="text-lg font-semibold">New task</h3>
               <p className="mt-1 text-sm text-slate-500">
                 Add a task to this project and categorize it by status.
@@ -383,9 +366,7 @@ function ProjectDetailInner({ id }: { id: string }) {
                 <span className="text-sm text-slate-600">Status</span>
                 <Select
                   value={taskStatusParam}
-                  onChange={(event) =>
-                    handleTaskStatusChange(event.target.value)
-                  }
+                  onChange={(event) => handleTaskStatusChange(event.target.value)}
                 >
                   <option value="all">All</option>
                   {taskStatusOptions.map((status) => (
@@ -422,18 +403,18 @@ function ProjectDetailInner({ id }: { id: string }) {
             />
           ) : filteredTasks.length === 0 ? (
             <QueryState
-              title={tasks.length === 0 ? "No tasks yet" : "No matching tasks"}
+              title={tasks.length === 0 ? 'No tasks yet' : 'No matching tasks'}
               description={
                 tasks.length === 0
-                  ? "Create your first task to get started."
-                  : "Try adjusting your search or status filter."
+                  ? 'Create your first task to get started.'
+                  : 'Try adjusting your search or status filter.'
               }
             />
           ) : (
             <div className="grid gap-4">
               {taskStatusOptions.map((status) => {
-                const statusTasks = tasksByStatus[status] ?? [];
-                if (statusTasks.length === 0) return null;
+                const statusTasks = tasksByStatus[status] ?? []
+                if (statusTasks.length === 0) return null
                 return (
                   <Card key={status} className="space-y-3">
                     <div>
@@ -441,8 +422,7 @@ function ProjectDetailInner({ id }: { id: string }) {
                         {status}
                       </p>
                       <h4 className="text-sm font-semibold">
-                        {statusTasks.length}{" "}
-                        {statusTasks.length === 1 ? "task" : "tasks"}
+                        {statusTasks.length} {statusTasks.length === 1 ? 'task' : 'tasks'}
                       </h4>
                     </div>
                     <div className="space-y-2">
@@ -466,23 +446,23 @@ function ProjectDetailInner({ id }: { id: string }) {
                             ) : null}
                           </div>
                           <Select
-                              value={status}
-                              onChange={(event) =>
-                                handleMoveTask(task.id, event.target.value as TaskStatus)
-                              }
-                              className="text-xs"
-                            >
-                              {getAllowedTaskStatuses(task.status).map((s) => (
-                                <option key={s} value={s}>
-                                  {s}
-                                </option>
-                              ))}
-                            </Select>
+                            value={status}
+                            onChange={(event) =>
+                              handleMoveTask(task.id, event.target.value as TaskStatus)
+                            }
+                            className="text-xs"
+                          >
+                            {getAllowedTaskStatuses(task.status).map((s) => (
+                              <option key={s} value={s}>
+                                {s}
+                              </option>
+                            ))}
+                          </Select>
                         </div>
                       ))}
                     </div>
                   </Card>
-                );
+                )
               })}
             </div>
           )}
@@ -490,7 +470,7 @@ function ProjectDetailInner({ id }: { id: string }) {
           <Modal
             open={isTaskModalOpen}
             id="task-detail-modal"
-            title={activeTask ? "Edit task" : "View task"}
+            title={activeTask ? 'Edit task' : 'View task'}
             onClose={closeTaskModal}
             footer={null}
           >
@@ -509,7 +489,7 @@ function ProjectDetailInner({ id }: { id: string }) {
         </>
       ) : null}
     </div>
-  );
+  )
 }
 
 export default function ProjectDetailContent({ id }: { id: string }) {
@@ -517,5 +497,5 @@ export default function ProjectDetailContent({ id }: { id: string }) {
     <Suspense>
       <ProjectDetailInner id={id} />
     </Suspense>
-  );
+  )
 }

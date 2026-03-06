@@ -30,20 +30,18 @@ export function normalizeError(error: unknown): ApiClientError {
   return new ApiClientError('Unexpected error. Please try again.')
 }
 
-export async function fetchJson<T>(
-  url: string,
-  options?: RequestInit,
-): Promise<T> {
+export async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     ...options,
   })
   const body = await res.json().catch(() => null)
   if (!res.ok) {
-    throw new ApiClientError(
-      body?.message ?? `Request failed (${res.status})`,
-      { status: res.status, code: body?.code, details: body?.details },
-    )
+    throw new ApiClientError(body?.message ?? `Request failed (${res.status})`, {
+      status: res.status,
+      code: body?.code,
+      details: body?.details,
+    })
   }
   return body as T
 }

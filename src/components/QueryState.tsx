@@ -29,9 +29,7 @@ export function QueryState({
       aria-live={tone === 'error' ? 'assertive' : undefined}
     >
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-          Status
-        </p>
+        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Status</p>
         <h3 className="text-lg font-semibold">{title}</h3>
       </div>
       {description ? <p className="text-sm opacity-80">{description}</p> : null}

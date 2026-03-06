@@ -1,26 +1,22 @@
-import type { Metadata } from "next";
-import type { ReactNode } from "react";
-import "./globals.css";
-import { Providers } from "./providers";
+import type { Metadata } from 'next'
+import type { ReactNode } from 'react'
+import './globals.css'
+import { Providers } from './providers'
 
 export const metadata: Metadata = {
   title: {
-    default: "Research Workspace",
-    template: "%s | Research Workspace",
+    default: 'Research Workspace',
+    template: '%s | Research Workspace',
   },
-  description: "Field notes and project management",
-};
+  description: 'Field notes and project management',
+}
 
-export default function RootLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
         <Providers>{children}</Providers>
       </body>
     </html>
-  );
+  )
 }

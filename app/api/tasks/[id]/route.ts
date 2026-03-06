@@ -27,10 +27,16 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (moveResult.success) {
     const { task, error } = moveTaskStatus(id, moveResult.data.status)
     if (error === 'TASK_NOT_FOUND') {
-      return NextResponse.json({ message: 'Task not found.', code: error }, { status: 404 })
+      return NextResponse.json(
+        { message: 'Task not found.', code: error },
+        { status: 404 },
+      )
     }
     if (error === 'TASK_STATUS_INVALID') {
-      return NextResponse.json({ message: 'Status change not allowed.', code: error }, { status: 400 })
+      return NextResponse.json(
+        { message: 'Status change not allowed.', code: error },
+        { status: 400 },
+      )
     }
     return NextResponse.json(task)
   }
@@ -39,7 +45,11 @@ export async function PATCH(request: Request, context: RouteContext) {
   const parsed = taskSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json(
-      { message: 'Validation failed.', code: 'VALIDATION_ERROR', details: parsed.error.flatten() },
+      {
+        message: 'Validation failed.',
+        code: 'VALIDATION_ERROR',
+        details: parsed.error.flatten(),
+      },
       { status: 400 },
     )
   }
@@ -48,7 +58,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ message: 'Task not found.', code: error }, { status: 404 })
   }
   if (error === 'TASK_STATUS_INVALID') {
-    return NextResponse.json({ message: 'Status change not allowed.', code: error }, { status: 400 })
+    return NextResponse.json(
+      { message: 'Status change not allowed.', code: error },
+      { status: 400 },
+    )
   }
   return NextResponse.json(task)
 }
@@ -57,7 +70,10 @@ export async function GET(_request: Request, context: RouteContext) {
   const { id } = await context.params
   const task = getTaskById(id)
   if (!task) {
-    return NextResponse.json({ message: 'Task not found.', code: 'TASK_NOT_FOUND' }, { status: 404 })
+    return NextResponse.json(
+      { message: 'Task not found.', code: 'TASK_NOT_FOUND' },
+      { status: 404 },
+    )
   }
   return NextResponse.json(task, {
     headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120' },

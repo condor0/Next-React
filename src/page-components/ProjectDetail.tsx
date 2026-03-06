@@ -1,56 +1,54 @@
-import { Link, useParams, useSearchParams } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { Button } from "../components/Button";
-import { Card } from "../components/Card";
-import { Input } from "../components/Input";
-import { Modal } from "../components/Modal";
-import { ProjectForm } from "../components/ProjectForm";
-import { QueryState } from "../components/QueryState";
-import { Select } from "../components/Select";
-import { TaskForm } from "../components/TaskForm";
-import { useToast } from "../state/uiStore";
-import type { ProjectValues, TaskStatus, TaskValues } from "../forms/schemas";
-import { taskStatusOptions } from "../forms/schemas";
-import { getProject, updateProjectApi } from "../api/projects";
+import { Button } from '../components/Button'
+import { Card } from '../components/Card'
+import { Input } from '../components/Input'
+import { Modal } from '../components/Modal'
+import { ProjectForm } from '../components/ProjectForm'
+import { QueryState } from '../components/QueryState'
+import { Select } from '../components/Select'
+import { TaskForm } from '../components/TaskForm'
+import { useToast } from '../state/uiStore'
+import type { ProjectValues, TaskStatus, TaskValues } from '../forms/schemas'
+import { taskStatusOptions } from '../forms/schemas'
+import { getProject, updateProjectApi } from '../api/projects'
 import {
   createTaskApi,
   listTasks,
   moveTaskStatusApi,
   updateTaskApi,
   type TaskRecord,
-} from "../api/tasks";
-import { getErrorMessage } from "../api/client";
+} from '../api/tasks'
+import { getErrorMessage } from '../api/client'
 import {
   getAdjacentTaskStatuses,
   getAllowedTaskStatuses,
   taskStatusLabels,
-} from "../utils/taskRules";
-import { useDebouncedValue } from "../utils/useDebouncedValue";
+} from '../utils/taskRules'
+import { useDebouncedValue } from '../utils/useDebouncedValue'
 
 export default function ProjectDetail() {
-  const { id } = useParams();
-  const { addToast } = useToast();
-  const queryClient = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [taskQueryInput, setTaskQueryInput] = useState(
-    searchParams.get("tq") ?? "",
-  );
-  const debouncedTaskQuery = useDebouncedValue(taskQueryInput.trim(), 350);
-  const taskStatusParam = searchParams.get("tstatus") ?? "all";
-  const [activeTask, setActiveTask] = useState<TaskRecord | null>(null);
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const { id } = useParams()
+  const { addToast } = useToast()
+  const queryClient = useQueryClient()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [taskQueryInput, setTaskQueryInput] = useState(searchParams.get('tq') ?? '')
+  const debouncedTaskQuery = useDebouncedValue(taskQueryInput.trim(), 350)
+  const taskStatusParam = searchParams.get('tstatus') ?? 'all'
+  const [activeTask, setActiveTask] = useState<TaskRecord | null>(null)
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const {
     data: project,
     isLoading,
     isError,
     error,
   } = useQuery({
-    queryKey: ["project", id],
+    queryKey: ['project', id],
     queryFn: () => getProject(id as string),
     enabled: Boolean(id),
-  });
+  })
 
   const {
     data: tasks = [],
@@ -59,51 +57,51 @@ export default function ProjectDetail() {
     error: tasksErrorDetails,
     isFetching: tasksFetching,
   } = useQuery({
-    queryKey: ["tasks", id],
+    queryKey: ['tasks', id],
     queryFn: () => listTasks(id as string),
     enabled: Boolean(id),
-  });
+  })
 
   useEffect(() => {
-    const currentQuery = searchParams.get("tq") ?? "";
-    if (currentQuery === debouncedTaskQuery) return;
+    const currentQuery = searchParams.get('tq') ?? ''
+    if (currentQuery === debouncedTaskQuery) return
     setSearchParams((previous) => {
-      const next = new URLSearchParams(previous);
+      const next = new URLSearchParams(previous)
       if (debouncedTaskQuery) {
-        next.set("tq", debouncedTaskQuery);
+        next.set('tq', debouncedTaskQuery)
       } else {
-        next.delete("tq");
+        next.delete('tq')
       }
-      return next;
-    });
-  }, [debouncedTaskQuery, searchParams, setSearchParams]);
+      return next
+    })
+  }, [debouncedTaskQuery, searchParams, setSearchParams])
 
   const updateMutation = useMutation({
     mutationFn: (values: ProjectValues) => updateProjectApi(id as string, values),
     onSuccess: (updatedProject) => {
-      queryClient.invalidateQueries({ queryKey: ["project", updatedProject.id] });
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ['project', updatedProject.id] })
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
       addToast({
-        title: "Project updated",
-        description: "Edits are saved in this mock flow.",
-        tone: "success",
-      });
+        title: 'Project updated',
+        description: 'Edits are saved in this mock flow.',
+        tone: 'success',
+      })
     },
     onError: (mutationError) => {
       addToast({
-        title: "Unable to update project",
+        title: 'Unable to update project',
         description: getErrorMessage(mutationError),
-        tone: "error",
-      });
+        tone: 'error',
+      })
     },
-  });
+  })
 
   const createTaskMutation = useMutation({
     mutationFn: (values: TaskValues) => createTaskApi(id as string, values),
     onMutate: async (values) => {
-      if (!id) return undefined;
-      await queryClient.cancelQueries({ queryKey: ["tasks", id] });
-      const previous = queryClient.getQueryData<TaskRecord[]>(["tasks", id]) ?? [];
+      if (!id) return undefined
+      await queryClient.cancelQueries({ queryKey: ['tasks', id] })
+      const previous = queryClient.getQueryData<TaskRecord[]>(['tasks', id]) ?? []
       const optimisticTask: TaskRecord = {
         id: `temp-${Date.now()}`,
         projectId: id,
@@ -112,49 +110,46 @@ export default function ProjectDetail() {
         status: values.status,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      };
-      queryClient.setQueryData<TaskRecord[]>(["tasks", id], [
-        optimisticTask,
-        ...previous,
-      ]);
-      return { previous, optimisticId: optimisticTask.id };
+      }
+      queryClient.setQueryData<TaskRecord[]>(['tasks', id], [optimisticTask, ...previous])
+      return { previous, optimisticId: optimisticTask.id }
     },
     onSuccess: (task, _values, context) => {
-      if (!id) return;
-      queryClient.setQueryData<TaskRecord[]>(["tasks", id], (current = []) =>
+      if (!id) return
+      queryClient.setQueryData<TaskRecord[]>(['tasks', id], (current = []) =>
         current.map((item) => (item.id === context?.optimisticId ? task : item)),
-      );
+      )
       addToast({
-        title: "Task created",
-        description: "Ready for the next step.",
-        tone: "success",
-      });
+        title: 'Task created',
+        description: 'Ready for the next step.',
+        tone: 'success',
+      })
     },
     onError: (mutationError, _values, context) => {
-      if (!id) return;
+      if (!id) return
       if (context?.previous) {
-        queryClient.setQueryData(["tasks", id], context.previous);
+        queryClient.setQueryData(['tasks', id], context.previous)
       }
       addToast({
-        title: "Unable to create task",
+        title: 'Unable to create task',
         description: getErrorMessage(mutationError),
-        tone: "error",
-      });
+        tone: 'error',
+      })
     },
     onSettled: () => {
-      if (!id) return;
-      queryClient.invalidateQueries({ queryKey: ["tasks", id] });
+      if (!id) return
+      queryClient.invalidateQueries({ queryKey: ['tasks', id] })
     },
-  });
+  })
 
   const updateTaskMutation = useMutation({
     mutationFn: ({ taskId, values }: { taskId: string; values: TaskValues }) =>
       updateTaskApi(taskId, values),
     onMutate: async ({ taskId, values }) => {
-      if (!id) return undefined;
-      await queryClient.cancelQueries({ queryKey: ["tasks", id] });
-      const previous = queryClient.getQueryData<TaskRecord[]>(["tasks", id]) ?? [];
-      queryClient.setQueryData<TaskRecord[]>(["tasks", id], (current = []) =>
+      if (!id) return undefined
+      await queryClient.cancelQueries({ queryKey: ['tasks', id] })
+      const previous = queryClient.getQueryData<TaskRecord[]>(['tasks', id]) ?? []
+      queryClient.setQueryData<TaskRecord[]>(['tasks', id], (current = []) =>
         current.map((task) =>
           task.id === taskId
             ? {
@@ -164,75 +159,75 @@ export default function ProjectDetail() {
               }
             : task,
         ),
-      );
-      return { previous };
+      )
+      return { previous }
     },
     onSuccess: (task) => {
-      if (!id) return;
-      queryClient.setQueryData<TaskRecord[]>(["tasks", id], (current = []) =>
+      if (!id) return
+      queryClient.setQueryData<TaskRecord[]>(['tasks', id], (current = []) =>
         current.map((item) => (item.id === task.id ? task : item)),
-      );
+      )
       addToast({
-        title: "Task updated",
-        description: "Changes are saved.",
-        tone: "success",
-      });
+        title: 'Task updated',
+        description: 'Changes are saved.',
+        tone: 'success',
+      })
     },
     onError: (mutationError, _values, context) => {
-      if (!id) return;
+      if (!id) return
       if (context?.previous) {
-        queryClient.setQueryData(["tasks", id], context.previous);
+        queryClient.setQueryData(['tasks', id], context.previous)
       }
       addToast({
-        title: "Unable to update task",
+        title: 'Unable to update task',
         description: getErrorMessage(mutationError),
-        tone: "error",
-      });
+        tone: 'error',
+      })
     },
     onSettled: () => {
-      if (!id) return;
-      queryClient.invalidateQueries({ queryKey: ["tasks", id] });
+      if (!id) return
+      queryClient.invalidateQueries({ queryKey: ['tasks', id] })
     },
-  });
+  })
 
   const moveTaskMutation = useMutation({
     mutationFn: ({ taskId, status }: { taskId: string; status: TaskStatus }) =>
       moveTaskStatusApi(taskId, status),
     onMutate: async ({ taskId, status }) => {
-      if (!id) return undefined;
-      await queryClient.cancelQueries({ queryKey: ["tasks", id] });
-      const previous = queryClient.getQueryData<TaskRecord[]>(["tasks", id]) ?? [];
-      queryClient.setQueryData<TaskRecord[]>(["tasks", id], (current = []) =>
+      if (!id) return undefined
+      await queryClient.cancelQueries({ queryKey: ['tasks', id] })
+      const previous = queryClient.getQueryData<TaskRecord[]>(['tasks', id]) ?? []
+      queryClient.setQueryData<TaskRecord[]>(['tasks', id], (current = []) =>
         current.map((task) =>
           task.id === taskId
             ? { ...task, status, updatedAt: new Date().toISOString() }
             : task,
         ),
-      );
-      return { previous };
+      )
+      return { previous }
     },
     onSuccess: (task) => {
-      if (!id) return;
-      queryClient.setQueryData<TaskRecord[]>(["tasks", id], (current = []) =>
+      if (!id) return
+      queryClient.setQueryData<TaskRecord[]>(['tasks', id], (current = []) =>
         current.map((item) => (item.id === task.id ? task : item)),
-      );
+      )
     },
     onError: (mutationError, _values, context) => {
-      if (!id) return;
+      if (!id) return
       if (context?.previous) {
-        queryClient.setQueryData(["tasks", id], context.previous);
+        queryClient.setQueryData(['tasks', id], context.previous)
       }
       addToast({
-        title: "Unable to move task",
+        title: 'Unable to move task',
         description: getErrorMessage(mutationError),
-        tone: "error",
-      });
+        tone: 'error',
+      })
     },
     onSettled: () => {
-      if (!id) return;
-      queryClient.invalidateQueries({ queryKey: ["tasks", id] });
+      if (!id) return
+      queryClient.invalidateQueries({ queryKey: ['tasks', id] })
     },
-  });
+  })
 
   const defaultValues = useMemo<Partial<ProjectValues>>(() => {
     if (project) {
@@ -241,97 +236,93 @@ export default function ProjectDetail() {
         status: project.status,
         ownerEmail: project.ownerEmail,
         description: project.description,
-      };
+      }
     }
 
     const label = id
-      ? id.replace(/(^.|-.)/g, (match: string) => match.replace("-", " ").toUpperCase())
-      : "";
+      ? id.replace(/(^.|-.)/g, (match: string) => match.replace('-', ' ').toUpperCase())
+      : ''
     return {
-      name: label || "Untitled project",
-      status: "In progress",
-      ownerEmail: "owner@company.com",
-      description: "Outline the next milestone and key risks for this project.",
-    };
-  }, [id, project]);
+      name: label || 'Untitled project',
+      status: 'In progress',
+      ownerEmail: 'owner@company.com',
+      description: 'Outline the next milestone and key risks for this project.',
+    }
+  }, [id, project])
 
   const handleSave = async (values: ProjectValues) => {
-    if (!id) return;
-    await updateMutation.mutateAsync(values);
-  };
+    if (!id) return
+    await updateMutation.mutateAsync(values)
+  }
 
   const handleCreateTask = async (values: TaskValues) => {
-    if (!id) return;
-    await createTaskMutation.mutateAsync(values);
-  };
+    if (!id) return
+    await createTaskMutation.mutateAsync(values)
+  }
 
   const handleUpdateTask = async (values: TaskValues) => {
-    if (!activeTask) return;
-    await updateTaskMutation.mutateAsync({ taskId: activeTask.id, values });
-    setIsTaskModalOpen(false);
-    setActiveTask(null);
-  };
+    if (!activeTask) return
+    await updateTaskMutation.mutateAsync({ taskId: activeTask.id, values })
+    setIsTaskModalOpen(false)
+    setActiveTask(null)
+  }
 
   const handleMoveTask = (taskId: string, status: TaskStatus) => {
-    moveTaskMutation.mutate({ taskId, status });
-  };
+    moveTaskMutation.mutate({ taskId, status })
+  }
 
   const handleTaskStatusChange = (value: string) => {
     setSearchParams((previous) => {
-      const next = new URLSearchParams(previous);
-      if (value === "all") {
-        next.delete("tstatus");
+      const next = new URLSearchParams(previous)
+      if (value === 'all') {
+        next.delete('tstatus')
       } else {
-        next.set("tstatus", value);
+        next.set('tstatus', value)
       }
-      return next;
-    });
-  };
+      return next
+    })
+  }
 
   const openTaskModal = (task: TaskRecord) => {
-    setActiveTask(task);
-    setIsTaskModalOpen(true);
-  };
+    setActiveTask(task)
+    setIsTaskModalOpen(true)
+  }
 
   const closeTaskModal = () => {
-    setActiveTask(null);
-    setIsTaskModalOpen(false);
-  };
+    setActiveTask(null)
+    setIsTaskModalOpen(false)
+  }
 
-  const headingName = isLoading ? "Loading..." : project?.name ?? id ?? "Unknown";
-  const canShowTasks = Boolean(id) && Boolean(project) && !isLoading && !isError;
-  const normalizedTaskQuery = debouncedTaskQuery.toLowerCase();
+  const headingName = isLoading ? 'Loading...' : (project?.name ?? id ?? 'Unknown')
+  const canShowTasks = Boolean(id) && Boolean(project) && !isLoading && !isError
+  const normalizedTaskQuery = debouncedTaskQuery.toLowerCase()
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
       const matchesStatus =
-        taskStatusParam === "all" ? true : task.status === taskStatusParam;
+        taskStatusParam === 'all' ? true : task.status === taskStatusParam
       const matchesQuery = normalizedTaskQuery
-        ? `${task.title} ${task.description}`
-            .toLowerCase()
-            .includes(normalizedTaskQuery)
-        : true;
-      return matchesStatus && matchesQuery;
-    });
-  }, [tasks, normalizedTaskQuery, taskStatusParam]);
+        ? `${task.title} ${task.description}`.toLowerCase().includes(normalizedTaskQuery)
+        : true
+      return matchesStatus && matchesQuery
+    })
+  }, [tasks, normalizedTaskQuery, taskStatusParam])
   const tasksByStatus = useMemo(() => {
     const grouped = taskStatusOptions.reduce(
       (acc, status) => ({ ...acc, [status]: [] }),
       {} as Record<TaskStatus, TaskRecord[]>,
-    );
+    )
     filteredTasks.forEach((task) => {
-      grouped[task.status].push(task);
-    });
-    return grouped;
-  }, [filteredTasks]);
+      grouped[task.status].push(task)
+    })
+    return grouped
+  }, [filteredTasks])
 
   return (
     <div className="space-y-4">
       <div>
         <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Project</p>
         <h2 className="text-2xl font-semibold">{headingName}</h2>
-        <p className="mt-2 text-sm text-slate-500">
-          Project detail routes.
-        </p>
+        <p className="mt-2 text-sm text-slate-500">Project detail routes.</p>
       </div>
 
       {!id ? (
@@ -364,7 +355,8 @@ export default function ProjectDetail() {
           </div>
           <div className="grid gap-2 text-sm text-slate-600">
             <p>
-              <span className="font-semibold text-slate-700">Owner:</span> {project.ownerEmail}
+              <span className="font-semibold text-slate-700">Owner:</span>{' '}
+              {project.ownerEmail}
             </p>
             <p>{project.description}</p>
             <p className="text-xs text-slate-400">
@@ -407,11 +399,7 @@ export default function ProjectDetail() {
                 Track next steps and keep the flow moving.
               </p>
             </div>
-            <TaskForm
-              submitLabel="Add task"
-              onSubmit={handleCreateTask}
-              resetOnSubmit
-            />
+            <TaskForm submitLabel="Add task" onSubmit={handleCreateTask} resetOnSubmit />
           </Card>
 
           <Card className="space-y-4">
@@ -478,11 +466,11 @@ export default function ProjectDetail() {
             />
           ) : filteredTasks.length === 0 ? (
             <QueryState
-              title={tasks.length === 0 ? "No tasks yet" : "No matching tasks"}
+              title={tasks.length === 0 ? 'No tasks yet' : 'No matching tasks'}
               description={
                 tasks.length === 0
-                  ? "Add the first task to get started."
-                  : "Try adjusting your search or filters."
+                  ? 'Add the first task to get started.'
+                  : 'Try adjusting your search or filters.'
               }
             />
           ) : (
@@ -512,9 +500,7 @@ export default function ProjectDetail() {
                           >
                             <div className="space-y-1">
                               <p className="font-semibold text-slate-900">{task.title}</p>
-                              <p className="text-xs text-slate-500">
-                                {task.description}
-                              </p>
+                              <p className="text-xs text-slate-500">{task.description}</p>
                             </div>
                             <div className="mt-3 flex flex-wrap items-center gap-2">
                               <Button
@@ -583,5 +569,5 @@ export default function ProjectDetail() {
         ) : null}
       </Modal>
     </div>
-  );
+  )
 }

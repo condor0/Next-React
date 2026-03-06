@@ -1,8 +1,8 @@
-"use client";
+'use client'
 
-import type { ReactNode } from "react";
-import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
-import { ToastViewport } from "@/components/Toast";
+import type { ReactNode } from 'react'
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
+import { ToastViewport } from '@/components/Toast'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -11,7 +11,7 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
   },
-});
+})
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -19,5 +19,5 @@ export function Providers({ children }: { children: ReactNode }) {
       <ToastViewport />
       {children}
     </QueryClientProvider>
-  );
+  )
 }

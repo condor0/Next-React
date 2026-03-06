@@ -53,9 +53,7 @@ export function Modal({ open, title, onClose, children, footer, id }: ModalProps
     if (event.key !== 'Tab') return
     const dialog = dialogRef.current
     if (!dialog) return
-    const focusable = Array.from(
-      dialog.querySelectorAll<HTMLElement>(focusableSelector),
-    )
+    const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector))
     if (focusable.length === 0) return
     const first = focusable[0]
     const last = focusable[focusable.length - 1]
@@ -97,9 +95,7 @@ export function Modal({ open, title, onClose, children, footer, id }: ModalProps
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-              Modal
-            </p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Modal</p>
             <h3 id={titleId} className="text-xl font-semibold text-ink">
               {title}
             </h3>
