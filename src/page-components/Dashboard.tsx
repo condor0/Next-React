@@ -84,7 +84,7 @@ export default function Dashboard() {
       <header className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-white/80 p-5 shadow-soft">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Today</p>
-          <h2 className="text-2xl font-semibold">Day 3 - Routing Demo</h2>
+          <h2 className="text-2xl font-semibold">React Demo</h2>
           <p className="mt-2 text-sm text-slate-500">
             Active: {activeCollection} - {filteredNotes.length} of {statusCounts.total} notes
           </p>
@@ -99,20 +99,27 @@ export default function Dashboard() {
               onChange={(event) => setQuery(event.target.value)}
             />
           </label>
-          <Button onClick={() => setIsModalOpen(true)}>New entry</Button>
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            aria-haspopup="dialog"
+            aria-controls="new-entry-modal"
+          >
+            New entry
+          </Button>
         </div>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
         <aside className="rounded-3xl bg-white/80 p-5 shadow-soft">
           <p className="text-sm font-semibold text-slate-600">Collections</p>
-          <nav className="mt-4 space-y-2">
+          <nav className="mt-4 space-y-2" aria-label="Collections">
             {collections.map((item) => {
               const isActive = item === activeCollection;
               return (
                 <button
                   key={item}
                   type="button"
+                  aria-pressed={isActive}
                   onClick={() => setActiveCollection(item)}
                   className={`flex w-full items-center justify-between rounded-2xl px-3 py-2 text-sm transition ${
                     isActive
@@ -204,6 +211,7 @@ export default function Dashboard() {
 
       <Modal
         open={isModalOpen}
+        id="new-entry-modal"
         title="New entry"
         onClose={() => setIsModalOpen(false)}
         footer={<Button onClick={() => setIsModalOpen(false)}>Save entry</Button>}

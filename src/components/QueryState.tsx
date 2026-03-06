@@ -23,7 +23,11 @@ export function QueryState({
   className,
 }: QueryStateProps) {
   return (
-    <Card className={cx('space-y-2', toneStyles[tone], className)}>
+    <Card
+      className={cx('space-y-2', toneStyles[tone], className)}
+      role={tone === 'error' ? 'alert' : undefined}
+      aria-live={tone === 'error' ? 'assertive' : undefined}
+    >
       <div>
         <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
           Status

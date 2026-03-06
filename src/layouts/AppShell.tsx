@@ -27,7 +27,7 @@ export function AppShell() {
             </p>
             <h1 className="text-lg font-semibold">Research Workspace</h1>
           </div>
-          <nav className="flex flex-wrap items-center gap-2">
+          <nav className="flex flex-wrap items-center gap-2" aria-label="Primary">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
