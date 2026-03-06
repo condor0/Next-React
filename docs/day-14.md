@@ -13,7 +13,7 @@ Created `.github/workflows/ci.yml` that runs on every push to `main` and on pull
 | Build  | `npm run build`     | Full `next build` — catches type errors and route issues              |
 | Test   | `npm test -- --run` | `continue-on-error: true` — Vitest 4.x runner config needs resolution |
 
-The workflow uses Node 20, `npm ci` for reproducible installs, and caches `node_modules` via `actions/setup-node`.
+The workflow uses Node 20, `npm ci` for reproducible installs, and caches the npm download cache via `actions/setup-node` (keyed by the lockfile).
 
 ### README rewrite
 

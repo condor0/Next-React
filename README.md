@@ -15,7 +15,7 @@ Open [http://localhost:3000](http://localhost:3000). The app redirects to `/logi
 
 | Script                  | Description                              |
 | ----------------------- | ---------------------------------------- |
-| `npm run dev`           | Start the Next.js dev server (Turbopack) |
+| `npm run dev`           | Start the Next.js dev server             |
 | `npm run build`         | Production build                         |
 | `npm start`             | Serve the production build               |
 | `npm run lint`          | Run ESLint                               |
