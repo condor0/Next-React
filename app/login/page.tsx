@@ -15,7 +15,11 @@ function LoginContent() {
   const { login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("from") ?? "/dashboard";
+  const fromParam = searchParams.get("from");
+  const redirectTo =
+    fromParam && fromParam.startsWith("/") && !fromParam.startsWith("//")
+      ? fromParam
+      : "/dashboard";
 
   const {
     register,

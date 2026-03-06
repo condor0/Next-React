@@ -28,6 +28,7 @@ import {
 } from "@/api/tasks";
 import { getErrorMessage } from "@/api/client";
 import { useDebouncedValue } from "@/utils/useDebouncedValue";
+import { getAllowedTaskStatuses } from "@/utils/taskRules";
 
 function ProjectDetailInner({ id }: { id: string }) {
   const { addToast } = useToast();
@@ -253,9 +254,13 @@ function ProjectDetailInner({ id }: { id: string }) {
 
   const handleUpdateTask = async (values: TaskValues) => {
     if (!activeTask) return;
-    await updateTaskMutation.mutateAsync({ taskId: activeTask.id, values });
-    setIsTaskModalOpen(false);
-    setActiveTask(null);
+    try {
+      await updateTaskMutation.mutateAsync({ taskId: activeTask.id, values });
+      setIsTaskModalOpen(false);
+      setActiveTask(null);
+    } catch {
+      // Keep modal open so the user can retry
+    }
   };
 
   const handleMoveTask = (taskId: string, status: TaskStatus) => {
@@ -460,21 +465,19 @@ function ProjectDetailInner({ id }: { id: string }) {
                               </p>
                             ) : null}
                           </div>
-                          {status !== "done" && (
-                            <Select
+                          <Select
                               value={status}
                               onChange={(event) =>
                                 handleMoveTask(task.id, event.target.value as TaskStatus)
                               }
                               className="text-xs"
                             >
-                              {taskStatusOptions.map((s) => (
+                              {getAllowedTaskStatuses(task.status).map((s) => (
                                 <option key={s} value={s}>
                                   {s}
                                 </option>
                               ))}
                             </Select>
-                          )}
                         </div>
                       ))}
                     </div>
