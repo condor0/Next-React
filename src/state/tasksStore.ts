@@ -154,11 +154,7 @@ export function updateTask(taskId: string, values: TaskValues, tasks: TaskRecord
   return nextTasks
 }
 
-export function moveTaskStatus(
-  taskId: string,
-  status: TaskStatus,
-  tasks: TaskRecord[],
-) {
+export function moveTaskStatus(taskId: string, status: TaskStatus, tasks: TaskRecord[]) {
   const now = new Date().toISOString()
   const nextTasks = tasks.map((task) => {
     if (task.id !== taskId) return task

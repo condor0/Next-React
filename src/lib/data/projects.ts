@@ -38,9 +38,7 @@ const seedProjects: ProjectRecord[] = [
 
 /* ── in-memory store (lives for the lifetime of the server process) ── */
 
-const store = new Map<string, ProjectRecord>(
-  seedProjects.map((p) => [p.id, p]),
-)
+const store = new Map<string, ProjectRecord>(seedProjects.map((p) => [p.id, p]))
 
 /* ── reads ── */
 
@@ -77,10 +75,7 @@ export function createProject(values: ProjectValues): ProjectRecord {
   return project
 }
 
-export function updateProject(
-  id: string,
-  values: ProjectValues,
-): ProjectRecord | null {
+export function updateProject(id: string, values: ProjectValues): ProjectRecord | null {
   const existing = store.get(id)
   if (!existing) return null
   const updated: ProjectRecord = {

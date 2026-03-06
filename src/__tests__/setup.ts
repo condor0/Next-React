@@ -1,51 +1,51 @@
-import { afterAll, beforeAll, afterEach } from 'vitest';
-import { render } from '@testing-library/react';
-import { setupServer } from 'msw/node';
-import { http, HttpResponse } from 'msw';
-import type { ReactElement } from 'react';
-import type { RenderOptions } from '@testing-library/react';
+import { afterAll, beforeAll, afterEach } from 'vitest'
+import { render } from '@testing-library/react'
+import { setupServer } from 'msw/node'
+import { http, HttpResponse } from 'msw'
+import type { ReactElement } from 'react'
+import type { RenderOptions } from '@testing-library/react'
 
 export const server = setupServer(
   http.get('/api/success', () => {
-    return HttpResponse.json({ message: 'Success' });
+    return HttpResponse.json({ message: 'Success' })
   }),
   http.get('/api/error', () => {
-    return HttpResponse.json({ message: 'Error' }, { status: 500 });
+    return HttpResponse.json({ message: 'Error' }, { status: 500 })
   }),
-);
+)
 
 // Mock localStorage
 const localStorageMock = (() => {
-  let store: Record<string, string> = {};
+  let store: Record<string, string> = {}
 
   return {
     getItem: (key: string) => store[key] || null,
     setItem: (key: string, value: string) => {
-      store[key] = value.toString();
+      store[key] = value.toString()
     },
     removeItem: (key: string) => {
-      delete store[key];
+      delete store[key]
     },
     clear: () => {
-      store = {};
+      store = {}
     },
-  };
-})();
+  }
+})()
 
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
-});
+})
 
-beforeAll(() => server.listen());
+beforeAll(() => server.listen())
 afterEach(() => {
-  window.localStorage.clear();
-  server.resetHandlers();
-});
-afterAll(() => server.close());
+  window.localStorage.clear()
+  server.resetHandlers()
+})
+afterAll(() => server.close())
 
 export const renderWithProviders = (
   ui: ReactElement,
-  { ...renderOptions }: Omit<RenderOptions, 'wrapper'> = {}
+  { ...renderOptions }: Omit<RenderOptions, 'wrapper'> = {},
 ) => {
-  return render(ui, { ...renderOptions });
-};
+  return render(ui, { ...renderOptions })
+}

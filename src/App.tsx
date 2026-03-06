@@ -1,11 +1,11 @@
-import { Navigate, Route, Routes } from "react-router-dom";
-import { AppShell } from "./layouts/AppShell";
-import { ProtectedRoute } from "./routes/ProtectedRoute";
-import Dashboard from "./pages/Dashboard";
-import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
-import ProjectDetail from "./pages/ProjectDetail";
-import Projects from "./pages/Projects";
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { AppShell } from './layouts/AppShell'
+import { ProtectedRoute } from './routes/ProtectedRoute'
+import Dashboard from './pages/Dashboard'
+import Login from './pages/Login'
+import NotFound from './pages/NotFound'
+import ProjectDetail from './pages/ProjectDetail'
+import Projects from './pages/Projects'
 
 function App() {
   return (
@@ -27,7 +27,7 @@ function App() {
 
       <Route path="*" element={<NotFound />} />
     </Routes>
-  );
+  )
 }
 
-export default App;
+export default App

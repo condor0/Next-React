@@ -48,9 +48,7 @@ const seedTasks: TaskRecord[] = [
 
 /* ── in-memory store ── */
 
-const store = new Map<string, TaskRecord>(
-  seedTasks.map((t) => [t.id, t]),
-)
+const store = new Map<string, TaskRecord>(seedTasks.map((t) => [t.id, t]))
 
 /* ── task transition rules (server-side copy) ── */
 
@@ -90,10 +88,7 @@ function ensureUniqueId(baseId: string): string {
   return `${baseId}-${suffix}`
 }
 
-export function createTask(
-  projectId: string,
-  values: TaskValues,
-): TaskRecord {
+export function createTask(projectId: string, values: TaskValues): TaskRecord {
   const now = new Date().toISOString()
   const id = ensureUniqueId(slugify(values.title) || 'task')
   const task: TaskRecord = {

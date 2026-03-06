@@ -6,11 +6,7 @@ import { Input } from './Input'
 import { Select } from './Select'
 import { Textarea } from './Textarea'
 import { Button } from './Button'
-import {
-  projectSchema,
-  projectStatusOptions,
-  type ProjectValues,
-} from '../forms/schemas'
+import { projectSchema, projectStatusOptions, type ProjectValues } from '../forms/schemas'
 
 type ProjectFormProps = {
   defaultValues?: Partial<ProjectValues>

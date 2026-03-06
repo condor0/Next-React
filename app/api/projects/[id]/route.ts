@@ -32,7 +32,11 @@ export async function PATCH(request: Request, context: RouteContext) {
   const parsed = projectSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json(
-      { message: 'Validation failed.', code: 'VALIDATION_ERROR', details: parsed.error.flatten() },
+      {
+        message: 'Validation failed.',
+        code: 'VALIDATION_ERROR',
+        details: parsed.error.flatten(),
+      },
       { status: 400 },
     )
   }

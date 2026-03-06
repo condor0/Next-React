@@ -1,37 +1,33 @@
-"use client";
+'use client'
 
-import { Suspense } from "react";
-import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/Button";
-import { Card } from "@/components/Card";
-import { Input } from "@/components/Input";
-import { ProjectForm } from "@/components/ProjectForm";
-import { Select } from "@/components/Select";
-import { useToast } from "@/state/uiStore";
-import type { ProjectValues } from "@/forms/schemas";
-import { projectStatusOptions } from "@/forms/schemas";
-import { QueryState } from "@/components/QueryState";
-import {
-  createProjectApi,
-  listProjects,
-  type ProjectRecord,
-} from "@/api/projects";
-import { getErrorMessage } from "@/api/client";
-import { useDebouncedValue } from "@/utils/useDebouncedValue";
+import { Suspense } from 'react'
+import Link from 'next/link'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Button } from '@/components/Button'
+import { Card } from '@/components/Card'
+import { Input } from '@/components/Input'
+import { ProjectForm } from '@/components/ProjectForm'
+import { Select } from '@/components/Select'
+import { useToast } from '@/state/uiStore'
+import type { ProjectValues } from '@/forms/schemas'
+import { projectStatusOptions } from '@/forms/schemas'
+import { QueryState } from '@/components/QueryState'
+import { createProjectApi, listProjects, type ProjectRecord } from '@/api/projects'
+import { getErrorMessage } from '@/api/client'
+import { useDebouncedValue } from '@/utils/useDebouncedValue'
 
 function ProjectsInner() {
-  const { addToast } = useToast();
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const searchParams = useSearchParams();
-  const [queryInput, setQueryInput] = useState(searchParams.get("q") ?? "");
-  const debouncedQuery = useDebouncedValue(queryInput.trim(), 400);
-  const statusParam = searchParams.get("status") ?? "all";
-  const pageParam = Number(searchParams.get("page") ?? "1");
-  const pageSize = 6;
+  const { addToast } = useToast()
+  const router = useRouter()
+  const queryClient = useQueryClient()
+  const searchParams = useSearchParams()
+  const [queryInput, setQueryInput] = useState(searchParams.get('q') ?? '')
+  const debouncedQuery = useDebouncedValue(queryInput.trim(), 400)
+  const statusParam = searchParams.get('status') ?? 'all'
+  const pageParam = Number(searchParams.get('page') ?? '1')
+  const pageSize = 6
 
   const {
     data: projects = [],
@@ -39,114 +35,103 @@ function ProjectsInner() {
     isError,
     error,
   } = useQuery({
-    queryKey: ["projects"],
+    queryKey: ['projects'],
     queryFn: listProjects,
-  });
+  })
 
   useEffect(() => {
-    const currentQuery = searchParams.get("q") ?? "";
-    if (currentQuery === debouncedQuery) return;
-    const params = new URLSearchParams(searchParams.toString());
+    const currentQuery = searchParams.get('q') ?? ''
+    if (currentQuery === debouncedQuery) return
+    const params = new URLSearchParams(searchParams.toString())
     if (debouncedQuery) {
-      params.set("q", debouncedQuery);
+      params.set('q', debouncedQuery)
     } else {
-      params.delete("q");
+      params.delete('q')
     }
-    params.set("page", "1");
-    router.push(`/projects?${params.toString()}`);
-  }, [debouncedQuery, searchParams, router]);
+    params.set('page', '1')
+    router.push(`/projects?${params.toString()}`)
+  }, [debouncedQuery, searchParams, router])
 
-  const normalizedQuery = debouncedQuery.toLowerCase();
+  const normalizedQuery = debouncedQuery.toLowerCase()
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
-      const matchesStatus =
-        statusParam === "all" ? true : project.status === statusParam;
+      const matchesStatus = statusParam === 'all' ? true : project.status === statusParam
       const matchesQuery = normalizedQuery
-        ? `${project.name} ${project.description}`
-            .toLowerCase()
-            .includes(normalizedQuery)
-        : true;
-      return matchesStatus && matchesQuery;
-    });
-  }, [projects, normalizedQuery, statusParam]);
+        ? `${project.name} ${project.description}`.toLowerCase().includes(normalizedQuery)
+        : true
+      return matchesStatus && matchesQuery
+    })
+  }, [projects, normalizedQuery, statusParam])
 
-  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / pageSize))
   const currentPage =
-    Number.isFinite(pageParam) && pageParam > 0
-      ? Math.min(pageParam, totalPages)
-      : 1;
+    Number.isFinite(pageParam) && pageParam > 0 ? Math.min(pageParam, totalPages) : 1
 
   useEffect(() => {
-    if (currentPage === pageParam) return;
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", String(currentPage));
-    router.push(`/projects?${params.toString()}`);
-  }, [currentPage, pageParam, searchParams, router]);
+    if (currentPage === pageParam) return
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('page', String(currentPage))
+    router.push(`/projects?${params.toString()}`)
+  }, [currentPage, pageParam, searchParams, router])
 
   const pagedProjects = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredProjects.slice(start, start + pageSize);
-  }, [currentPage, filteredProjects]);
+    const start = (currentPage - 1) * pageSize
+    return filteredProjects.slice(start, start + pageSize)
+  }, [currentPage, filteredProjects])
 
   const createMutation = useMutation({
     mutationFn: createProjectApi,
     onSuccess: (project) => {
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
-      queryClient.invalidateQueries({ queryKey: ["project", project.id] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
+      queryClient.invalidateQueries({ queryKey: ['project', project.id] })
       addToast({
-        title: "Project created",
-        description: "Ready to edit the details.",
-        tone: "success",
-      });
-      router.push(`/projects/${project.id}`);
+        title: 'Project created',
+        description: 'Ready to edit the details.',
+        tone: 'success',
+      })
+      router.push(`/projects/${project.id}`)
     },
     onError: (mutationError) => {
       addToast({
-        title: "Unable to create project",
+        title: 'Unable to create project',
         description: getErrorMessage(mutationError),
-        tone: "error",
-      });
+        tone: 'error',
+      })
     },
-  });
+  })
 
   const handleCreate = async (values: ProjectValues) => {
-    await createMutation.mutateAsync(values);
-  };
+    await createMutation.mutateAsync(values)
+  }
 
   const handleStatusChange = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value === "all") {
-      params.delete("status");
+    const params = new URLSearchParams(searchParams.toString())
+    if (value === 'all') {
+      params.delete('status')
     } else {
-      params.set("status", value);
+      params.set('status', value)
     }
-    params.set("page", "1");
-    router.push(`/projects?${params.toString()}`);
-  };
+    params.set('page', '1')
+    router.push(`/projects?${params.toString()}`)
+  }
 
   const handlePageChange = (nextPage: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", String(nextPage));
-    router.push(`/projects?${params.toString()}`);
-  };
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('page', String(nextPage))
+    router.push(`/projects?${params.toString()}`)
+  }
 
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-          Portfolio
-        </p>
+        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Portfolio</p>
         <h2 className="text-2xl font-semibold">Projects</h2>
-        <p className="mt-2 text-sm text-slate-500">
-          Select a project to view details.
-        </p>
+        <p className="mt-2 text-sm text-slate-500">Select a project to view details.</p>
       </div>
 
       <Card className="space-y-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-            Create
-          </p>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Create</p>
           <h3 className="text-lg font-semibold">New project</h3>
           <p className="mt-1 text-sm text-slate-500">
             Capture a new project and keep the summary short.
@@ -157,9 +142,7 @@ function ProjectsInner() {
 
       <Card className="space-y-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-            Search
-          </p>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Search</p>
           <h3 className="text-lg font-semibold">Find projects</h3>
           <p className="mt-1 text-sm text-slate-500">
             Filter by name, summary, and status.
@@ -212,11 +195,11 @@ function ProjectsInner() {
           />
         ) : filteredProjects.length === 0 ? (
           <QueryState
-            title={projects.length === 0 ? "No projects yet" : "No matching projects"}
+            title={projects.length === 0 ? 'No projects yet' : 'No matching projects'}
             description={
               projects.length === 0
-                ? "Create your first project to get started."
-                : "Try adjusting your search or filters."
+                ? 'Create your first project to get started.'
+                : 'Try adjusting your search or filters.'
             }
             className="md:col-span-2"
           />
@@ -224,9 +207,7 @@ function ProjectsInner() {
           pagedProjects.map((project: ProjectRecord) => (
             <Card key={project.id} className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-slate-900">
-                  {project.name}
-                </h3>
+                <h3 className="text-lg font-semibold text-slate-900">{project.name}</h3>
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">
                   {project.status}
                 </span>
@@ -268,7 +249,7 @@ function ProjectsInner() {
         </div>
       ) : null}
     </div>
-  );
+  )
 }
 
 export default function ProjectsContent() {
@@ -276,5 +257,5 @@ export default function ProjectsContent() {
     <Suspense>
       <ProjectsInner />
     </Suspense>
-  );
+  )
 }
